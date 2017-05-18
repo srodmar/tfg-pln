@@ -57,7 +57,7 @@ def main():
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
-    store_dir = 'test'
+    store_dir = 'storage'
     query = ''
 
     try:
@@ -76,53 +76,61 @@ def main():
         if not messages:
             print('No messages found.')
         else:
-            pp = pprint.PrettyPrinter(indent=4)
             for msg in messages:
                 msg_id = msg['id']
                 message = service.users().messages().get(userId='me', id=msg_id).execute()
-                # pdb.set_trace()
-                #pp.pprint(message['payload'])
-                for i,part in enumerate(message['payload']['parts']):
-                    #print('PAAART:')
-                    #pp.pprint(part)
-                    print ('ITER No. ' + str(i))
-                    if part['mimeType'] == 'text/plain':
-                        print('ESTA PART MOLA')
-                        body_data = base64.urlsafe_b64decode(
-                            part['body']['data'].encode('UTF-8'))
-                        print(body_data)
-
-                        if not os.path.exists(store_dir):
-                            os.makedirs(store_dir)
-
-                        path = store_dir + '/pepe' + str(i) + '.html'
-
-                        aux = i
-                        while os.path.isfile(path):
-                            aux = aux + 1
-                            path = store_dir + '/pepe' + str(aux) + '.html'
-                        print('se guarda en ' + path)
-                        f = open(path, 'w')
-                        f.write(body_data)
-                        f.close()
-
-                    if part['filename']:
-                        # pp.pprint(part)
-                        attach = service.users().messages().attachments().get(
-                            userId='me', messageId=msg_id, id=part['body']['attachmentId']).execute()
-                        file_data = base64.urlsafe_b64decode(attach['data']
-                                                             .encode('UTF-8'))
-                        if not os.path.exists(store_dir):
-                            os.makedirs(store_dir)
-                        path = store_dir + '/' + part['filename']
-
-                        f = open(path, 'w')
-                        f.write(file_data)
-                        f.close()
+                iter_part(message['payload']['parts'], store_dir, service, msg_id)
 
     except errors.HttpError, error:
         print ('An error occurred: %s') % error
 
+def iter_part(parts, store_dir, service, msg_id):
+    for i, part in enumerate(parts):
+        if part['mimeType'] == 'text/plain':
+            save_text(part['body']['data'], msg_id, store_dir)
+
+        elif part['mimeType'] == 'multipart/alternative':
+            iter_part(part['parts'], store_dir, service, msg_id)
+
+        if part['filename']:
+            save_file(part, msg_id, store_dir, service)
+
+def save_text(text_data, msg_id, store_dir):
+    store_dir = store_dir + '/body_texts'
+    body_data = base64.urlsafe_b64decode(text_data.encode('UTF-8'))
+
+    if not os.path.exists(store_dir):
+        os.makedirs(store_dir)
+
+    path = store_dir + '/mail_text_' + msg_id + '.txt'
+    if not os.path.isfile(path):
+        f = open(path, 'w')
+        f.write(body_data)
+        f.close()
+
+    '''i = 1
+    path = store_dir + '/mail_text' + str(i) + '.html'
+    while os.path.isfile(path):
+        i = i + 1
+        path = store_dir + '/mail_text' + str(i) + '.html'
+    print('se guarda en ' + path)
+    f = open(path, 'w')
+    f.write(body_data)
+    f.close()'''
+
+def save_file(part, msg_id, store_dir, service):
+    store_dir = store_dir + '/attachments'
+    attach = service.users().messages().attachments().get(
+        userId='me', messageId=msg_id, id=part['body']['attachmentId']).execute()
+    file_data = base64.urlsafe_b64decode(attach['data'].encode('UTF-8'))
+    if not os.path.exists(store_dir):
+        os.makedirs(store_dir)
+
+    path = store_dir + '/' + msg_id + '_' + part['filename']
+    if not os.path.isfile(path):
+        f = open(path, 'w')
+        f.write(file_data)
+        f.close()
 
 if __name__ == '__main__':
     main()
