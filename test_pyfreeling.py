@@ -1,10 +1,10 @@
 import xmltodict
 import pprint
-import pdb
 
-from pyfreeling import Analyzer
+#from pyfreeling import Analyzer
 from lxml import etree
 
+'''
 pp = pprint.PrettyPrinter(indent=4)
 
 analyzer = Analyzer(config='en.cfg')
@@ -13,7 +13,6 @@ print(etree.tostring(xml))
 obj = xmltodict.parse(etree.tostring(xml))
 
 #pp.pprint(obj['sentences']['sentence'])
-#pdb.set_trace()
 
 if isinstance(obj['sentences']['sentence'], list):
     for sentence in obj['sentences']['sentence']:
@@ -23,7 +22,23 @@ else:
     for token in obj['sentences']['sentence']['token']:
         print token['@lemma']
 
-'''analyzer = Analyzer(config='es.cfg', lang='es')
+analyzer = Analyzer(config='es.cfg', lang='es')
 
 output = analyzer.run('Hola mundo', 'noflush')
-print(etree.tostring(output))'''
+print(etree.tostring(output))
+'''
+def extract_lemmas(analyzer, text):
+    xml = analyzer.run(text)
+    obj = xmltodict.parse(etree.tostring(xml))
+    #print obj
+    lemmas = []
+    if obj['sentences']:
+        if isinstance(obj['sentences']['sentence'], list):
+            for sentence in obj['sentences']['sentence']:
+                for token in sentence['token']:
+                    lemmas.append(token['@lemma'])
+        else:
+            for token in obj['sentences']['sentence']['token']:
+                lemmas.append(token['@lemma'])
+
+    return lemmas
