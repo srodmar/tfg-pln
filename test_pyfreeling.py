@@ -35,10 +35,14 @@ def extract_lemmas(analyzer, text):
     if obj['sentences']:
         if isinstance(obj['sentences']['sentence'], list):
             for sentence in obj['sentences']['sentence']:
+                lemmas_in_sentence = []
                 for token in sentence['token']:
-                    lemmas.append(token['@lemma'])
+                    lemmas_in_sentence.append(token['@lemma'])
+                lemmas.append(lemmas_in_sentence)
         else:
+            lemmas_in_sentence = []
             for token in obj['sentences']['sentence']['token']:
-                lemmas.append(token['@lemma'])
+                lemmas_in_sentence.append(token['@lemma'])
+            lemmas.append(lemmas_in_sentence)
 
     return lemmas

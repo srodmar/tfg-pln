@@ -46,12 +46,14 @@ for lang in analyzer:
             lemmas = extract_lemmas(analyzer[lang], text)
             print lemmas
             if lang == 'es':
-                for word in lemmas:
-                    if word in spanish_stopwords:
-                        lemmas.remove(word)
-                print lemmas
-                dictionary = gensim.corpora.Dictionary([lemmas])
-                lda = gensim.models.ldamodel.LdaModel(lemmas, num_topics=3, id2word = dictionary, passes=50)
+                for sentence in lemmas:
+                    for word in sentence:
+                        if word in spanish_stopwords:
+                            sentence.remove(word)
+                #print lemmas
+                dictionary = gensim.corpora.Dictionary(lemmas)
+                doc_term_matrix = [dictionary.doc2bow(doc) for doc in lemmas]
+                lda = gensim.models.ldamodel.LdaModel(doc_term_matrix, num_topics=3, id2word = dictionary, passes=10)
                 print lda.show_topics(num_topics=3)
-                print 'MODEEEEEL: '
-                print model
+                #print 'MODEEEEEL: '
+                #print model
