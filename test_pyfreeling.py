@@ -29,6 +29,23 @@ print(etree.tostring(output))
 '''
 def extract_lemmas(analyzer, text):
     xml = analyzer.run(text)
+    print xml
+    obj = xmltodict.parse(etree.tostring(xml))
+    #print obj
+    lemmas = []
+    if obj['sentences']:
+        if isinstance(obj['sentences']['sentence'], list):
+            for sentence in obj['sentences']['sentence']:
+                for token in sentence['token']:
+                    lemmas.append(token['@lemma'])
+        else:
+            for token in obj['sentences']['sentence']['token']:
+                lemmas.append(token['@lemma'])
+
+    return lemmas
+
+def extract_lemmas_sentences(analyzer, text):
+    xml = analyzer.run(text)
     obj = xmltodict.parse(etree.tostring(xml))
     #print obj
     lemmas = []
