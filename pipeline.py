@@ -10,27 +10,29 @@ import logging
 from nltk.corpus import stopwords
 
 from gmail import main as collect_mails
-from lang_detect import detect_classify
+from lang_detect import detect_classify, detect_classify_fl
 from pyfreeling import Analyzer
 from test_pyfreeling import extract_lemmas
 
 # Se lanza la recogida de correos electrónicos
-#collect_mails()
+collect_mails()
 
 # Se analizan los correos y se muestran los idiomas detectados
-#detect_classify()
+detect_classify()
 
 # Detectar idioma correo -> lanzar Stanford para ese idioma -> Procesar con StanfordCoreNLP
 # Problema: hay que cerrar y volver a lanzar Stanford con cada cambio de idioma
 # Solución: dividir los correos por idioma y lanzar una instancia del
 # servidor por cada idioma
 
-logging.basicConfig(filename="sample.log", level=logging.DEBUG)
+logging.basicConfig(filename="sample.log", filemode='w', level=logging.DEBUG)
 
 
 def clean_text(text):
     stopw = stopwords.words('spanish')
     exclude = set(string.punctuation)
+    exclude.update(['¿'.decode('UTF-8'), '¡'.decode('UTF-8'), '~'])
+    print exclude
     text = text.decode('utf-8')
     # Se crea un array con todas las palabras del texto que no sean stopwords
     # y luego se uno dicho array separando cada item por un espacio (" ")
@@ -65,14 +67,15 @@ for lang in analyzer:
             text = current_file.read()
         # print 'IDIOMA: ' + lang + ' TEXT: ' + text
         ctext = clean_text(text)
-        print ctext
         lemmas = extract_lemmas(analyzer[lang], ctext)
+        logging.info(lemmas)
         # print lemmas
         lang_lemmas.append(lemmas)
     dictionary = gensim.corpora.Dictionary(lang_lemmas)
     email_term_matrix = [dictionary.doc2bow(email) for email in lang_lemmas]
     lda = gensim.models.ldamodel.LdaModel(
-        email_term_matrix, num_topics=len(file_list), id2word=dictionary, passes=50)
-    print lda.show_topics(num_topics=len(file_list), num_words=5)
+        email_term_matrix, num_topics=10, id2word=dictionary, passes=20)
+    #print lda.show_topics(num_topics=10, num_words=5)
+    print lda.get_document_topics(dictionary.doc2bow(lang_lemmas[0]))
     # print 'MODEEEEEL: '
     # print model
