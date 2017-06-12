@@ -29,14 +29,15 @@ from store_results import insert_email
 logging.basicConfig(filename="sample.log", filemode='w', level=logging.DEBUG)
 
 
-def clean_text(text, lang):
+def clean_text(text, lang='english'):
     try:
         stopw = stopwords.words(lang)
     except IOError:
+        print 'No hay stopw para: ' + lang
         stopw = []
     exclude = set(string.punctuation)
     exclude.update(['¿'.decode('UTF-8'), '¡'.decode('UTF-8'), '~'])
-    print exclude
+    # print exclude
     text = text.decode('utf-8')
     # Se crea un array con todas las palabras del texto que no sean stopwords
     # y luego se uno dicho array separando cada item por un espacio (" ")
@@ -58,17 +59,21 @@ def get_topic(topic_list):
 
 store_dir = 'storage/body_texts/classified'
 idiomas = {'ca': 'catalan', 'en': 'english', 'es': 'spanish', 'fr': 'french',
-           'gl': 'galician', 'it': 'italian', 'pt': 'portuguese', 'ru': 'russian', 'de': 'german'}
+           'gl': 'galician', 'it': 'italian', 'pt': 'portuguese',
+           'ru': 'russian', 'de': 'german', 'nl': 'dutch', 'sl': 'slovene'}
 #port = 8081
 idiomas_freeling = ['as', 'ca', 'cy', 'en', 'es', 'fr', 'gl', 'it', 'pt', 'ru']
 analyzer = {}
-for dir in os.listdir(store_dir):
-    if dir in idiomas_freeling:
-        print 'funciona el dir: ' + str(dir)
-        analyzer[dir] = Analyzer(config=dir + '.cfg', lang=dir)
-print analyzer
-for lang in analyzer:
-    print 'ANALIZANDO ' + lang
+
+for lang in os.listdir(store_dir):
+    if lang in idiomas_freeling:
+        print 'funciona el dir: ' + str(lang)
+        analyzer = Analyzer(config=lang + '.cfg')
+    else:
+        analyzer = None
+# print analyzer
+# for lang in analyzer:
+    # print 'ANALIZANDO ' + lang
     # if lang == 'es':
     texts_dir = store_dir + '/' + lang
     lang_lemmas = {}
@@ -78,8 +83,14 @@ for lang in analyzer:
         with open(texts_dir + '/' + file, 'r') as current_file:
             text = current_file.read()
         # print 'IDIOMA: ' + lang + ' TEXT: ' + text
-        ctext = clean_text(text, idiomas[lang])
-        lemmas = extract_lemmas(analyzer[lang], ctext)
+        if lang in idiomas:
+            ctext = clean_text(text, idiomas[lang])
+        else:
+            ctext = clean_text(text)
+        if analyzer:
+            lemmas = extract_lemmas(analyzer, ctext)
+        else:
+            lemmas = ctext.split()
         logging.info(lemmas)
         # Agrego cada array de lemmas al diccionario, con su mail id como clave
         lang_lemmas[file[10:-4]] = (lemmas, text)
@@ -90,10 +101,9 @@ for lang in analyzer:
     lda = gensim.models.ldamodel.LdaModel(
         email_term_matrix, num_topics=10, id2word=dictionary, passes=20)
     # print lda.show_topics(num_topics=10, num_words=5)
-    for id in lang_lemmas:
+    for mail_id in lang_lemmas:
         mail_topic = get_topic(lda.get_document_topics(
-            dictionary.doc2bow(lang_lemmas[id][0])))
-        print 'Mail: %s - Topic: %s' % (id, lda.show_topic(mail_topic, topn=5))
-    # print lda.get_document_topics(dictionary.doc2bow(lang_lemmas[0]))
-    # print 'MODEEEEEL: '
-    # print model
+            dictionary.doc2bow(lang_lemmas[mail_id][0])))
+        insert_email(mail_id, lang_lemmas[mail_id][
+                     1], lda.show_topic(mail_topic, topn=5))
+        # print 'Mail: %s - Topic: %s' % (id, lda.show_topic(mail_topic, topn=5))
