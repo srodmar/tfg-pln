@@ -21,6 +21,7 @@ except ImportError:
 SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Gmail API Python Quickstart'
+pp = pprint.PrettyPrinter(indent=4)
 
 
 def get_credentials():
@@ -79,30 +80,42 @@ def main():
             for msg in messages:
                 msg_id = msg['id']
                 message = service.users().messages().get(userId='me', id=msg_id).execute()
-                iter_part(message['payload']['parts'], store_dir, service, msg_id)
+                print('MESSAGEEE:')
+                pp.pprint(get_subject(message['payload']['headers']))
+                iter_part(message['payload'], store_dir, service, msg_id)
 
     except errors.HttpError, error:
         print ('An error occurred: %s') % error
 
-def iter_part(parts, store_dir, service, msg_id):
-    for i, part in enumerate(parts):
+
+def get_subject(headers):
+    for item in headers:
+        if item['name'] == 'Subject':
+            return item['value']
+
+
+def iter_part(payload, store_dir, service, msg_id):
+    for i, part in enumerate(payload['parts']):
         if part['mimeType'] == 'text/plain':
-            save_text(part['body']['data'], msg_id, store_dir)
+            save_text(part['body']['data'], msg_id,
+                      get_subject(payload['headers']), store_dir)
 
         elif part['mimeType'] == 'multipart/alternative':
-            iter_part(part['parts'], store_dir, service, msg_id)
+            print ('IF MALIGNOOOOOOOOO')
+            iter_part(part, store_dir, service, msg_id)
 
-        if part['filename']:
-            save_file(part, msg_id, store_dir, service)
+        # if part['filename']:
+        #    save_file(part, msg_id, store_dir, service)
 
-def save_text(text_data, msg_id, store_dir):
+
+def save_text(text_data, msg_id, subject, store_dir):
     store_dir = store_dir + '/body_texts'
     body_data = base64.urlsafe_b64decode(text_data.encode('UTF-8'))
 
     if not os.path.exists(store_dir):
         os.makedirs(store_dir)
 
-    path = store_dir + '/mail_text_' + msg_id + '.txt'
+    path = store_dir + '/' + subject + '_' + msg_id + '.txt'
     if not os.path.isfile(path):
         f = open(path, 'w')
         f.write(body_data)
@@ -117,6 +130,7 @@ def save_text(text_data, msg_id, store_dir):
     f = open(path, 'w')
     f.write(body_data)
     f.close()'''
+
 
 def save_file(part, msg_id, store_dir, service):
     store_dir = store_dir + '/attachments'

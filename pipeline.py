@@ -16,7 +16,7 @@ from test_pyfreeling import extract_lemmas
 from store_results import insert_email
 
 # Se lanza la recogida de correos electrónicos
-# collect_mails()
+collect_mails()
 
 # Se analizan los correos y se muestran los idiomas detectados
 # detect_classify()
@@ -27,6 +27,7 @@ from store_results import insert_email
 # servidor por cada idioma
 
 logging.basicConfig(filename="sample.log", filemode='w', level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def clean_text(text, lang='english'):
@@ -49,12 +50,14 @@ def clean_text(text, lang='english'):
 
 
 def get_topic(topic_list):
+    print 'Lista de tópicos: ', topic_list
     max_topic_id = -1
     max_prob = -1
     for topic in topic_list:
         if topic[1] > max_prob:
             max_prob = topic[1]
             max_topic_id = topic[0]
+    print 'topic: ', max_topic_id, ' prob: ', max_prob
     return max_topic_id
 
 store_dir = 'storage/body_texts/classified'
@@ -91,7 +94,7 @@ for lang in os.listdir(store_dir):
             lemmas = extract_lemmas(analyzer, ctext)
         else:
             lemmas = ctext.split()
-        logging.info(lemmas)
+        logger.info(lemmas)
         # Agrego cada array de lemmas al diccionario, con su mail id como clave
         lang_lemmas[file[10:-4]] = (lemmas, text)
     dictionary = gensim.corpora.Dictionary(

@@ -11,19 +11,6 @@ client.email.authenticate('emailUser', '', mechanism='SCRAM-SHA-1')
 
 db = client.email
 emails = db.emails
-'''
-post = {"author": "Mike",
-        "text": "My first blog post!",
-        "tags": ["mongodb", "python", "pymongo"]}
-
-
-
-post_id = emails.insert_one(post).inserted_id
-logger.info("Added object with id: %s to database.", post_id)
-
-print post_id
-'''
-
 
 def insert_email(mail_id, mail_text, mail_topic):
     email = {"mail_id": mail_id,
