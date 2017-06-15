@@ -16,10 +16,10 @@ from test_pyfreeling import extract_lemmas
 from store_results import insert_email
 
 # Se lanza la recogida de correos electrónicos
-collect_mails()
+#collect_mails()
 
 # Se analizan los correos y se muestran los idiomas detectados
-# detect_classify()
+#detect_classify()
 
 # Detectar idioma correo -> lanzar Stanford para ese idioma -> Procesar con StanfordCoreNLP
 # Problema: hay que cerrar y volver a lanzar Stanford con cada cambio de idioma
@@ -96,7 +96,7 @@ for lang in os.listdir(store_dir):
             lemmas = ctext.split()
         logger.info(lemmas)
         # Agrego cada array de lemmas al diccionario, con su mail id como clave
-        lang_lemmas[file[10:-4]] = (lemmas, text)
+        lang_lemmas[file[-20:-4]] = (lemmas, file[:-21], text)
     dictionary = gensim.corpora.Dictionary(
         [tuple[0] for id, tuple in lang_lemmas.viewitems()])
     email_term_matrix = [dictionary.doc2bow(
@@ -107,6 +107,7 @@ for lang in os.listdir(store_dir):
     for mail_id in lang_lemmas:
         mail_topic = get_topic(lda.get_document_topics(
             dictionary.doc2bow(lang_lemmas[mail_id][0])))
-        insert_email(mail_id, lang_lemmas[mail_id][
-                     1], lda.show_topic(mail_topic, topn=5))
-        # print 'Mail: %s - Topic: %s' % (id, lda.show_topic(mail_topic, topn=5))
+        insert_email(mail_id, lang_lemmas[mail_id][1], lang_lemmas[
+                     mail_id][2], lda.show_topic(mail_topic, topn=5))
+        # print 'Mail: %s - Topic: %s' % (id, lda.show_topic(mail_topic,
+        # topn=5))

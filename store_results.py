@@ -12,8 +12,9 @@ client.email.authenticate('emailUser', '', mechanism='SCRAM-SHA-1')
 db = client.email
 emails = db.emails
 
-def insert_email(mail_id, mail_text, mail_topic):
+def insert_email(mail_id, mail_subject, mail_text, mail_topic):
     email = {"mail_id": mail_id,
+             "subject": mail_subject,
              "text": mail_text,
              "topic": mail_topic}
 
@@ -25,6 +26,7 @@ def insert_email(mail_id, mail_text, mail_topic):
             'mail_id': mail_id
         }, {
             '$set': {
+                'subject': mail_subject,
                 'text': mail_text,
                 'topic': mail_topic
             }
