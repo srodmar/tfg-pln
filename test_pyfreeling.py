@@ -3,9 +3,9 @@ import pprint
 
 #from pyfreeling import Analyzer
 from lxml import etree
-
-'''
 pp = pprint.PrettyPrinter(indent=4)
+'''
+
 
 analyzer = Analyzer(config='en.cfg')
 xml = analyzer.run('Hello World, This is me.', 'noflush')
@@ -28,7 +28,7 @@ output = analyzer.run('Hola mundo', 'noflush')
 print(etree.tostring(output))
 '''
 def extract_lemmas(analyzer, text):
-    xml = analyzer.run(text)
+    xml = analyzer.run(text, 'flush')
     print xml
     obj = xmltodict.parse(etree.tostring(xml))
     #print obj
@@ -36,14 +36,30 @@ def extract_lemmas(analyzer, text):
     if obj['sentences']:
         if isinstance(obj['sentences']['sentence'], list):
             for sentence in obj['sentences']['sentence']:
-                for token in sentence['token']:
-                    print 'TOKEN list: ', token
+                #print 'LA FRASE:'
+                #pp.pprint(sentence['token'])
+                if isinstance(sentence['token'], list):
+                    for token in sentence['token']:
+                        #print 'TOKEN list:'
+                        #pp.pprint(token)
+                        if token['@tag'].startswith('NP') or token['@tag'].startswith('NNP'):
+                            print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
+                            continue
+                        lemmas.append(token['@lemma'])
+                else:
+                    token = sentence['token']
+                    if token['@tag'].startswith('NP') or token['@tag'].startswith('NNP'):
+                        print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
+                        continue
                     lemmas.append(token['@lemma'])
         else:
             for token in obj['sentences']['sentence']['token']:
                 print 'TOKEN no list:', token
+                if token['@tag'].startswith('NP') or token['@tag'].startswith('NNP'):
+                    print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
+                    continue
                 lemmas.append(token['@lemma'])
-
+    print 'LEMMMAAAS', lemmas
     return lemmas
 
 def extract_lemmas_sentences(analyzer, text):

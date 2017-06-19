@@ -5,10 +5,11 @@ import base64
 import pprint
 import pdb
 
-from apiclient import discovery, errors
+from apiclient import discovery, errors, mimeparse
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
+from email.mime.text import MIMEText
 
 try:
     import argparse
@@ -18,7 +19,7 @@ except ImportError:
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/gmail-python-quickstart.json
-SCOPES = 'https://www.googleapis.com/auth/gmail.readonly'
+SCOPES = 'https://www.googleapis.com/auth/gmail.modify'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Gmail API Python Quickstart'
 pp = pprint.PrettyPrinter(indent=4)
@@ -146,5 +147,31 @@ def save_file(part, msg_id, store_dir, service):
         f.write(file_data)
         f.close()
 
+
+def send_trec():
+    credentials = get_credentials()
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('gmail', 'v1', http=http)
+
+    trec_dir = 'trec07p/data'
+    files = os.listdir(trec_dir)
+
+    for i, file in enumerate(files[:5]):
+        with open(trec_dir + '/' + file, 'r') as current_file:
+            text = current_file.read()
+        message = MIMEText(text, 'html')
+        message['to'] = '@gmail.com'
+        message['from'] = '@gmail.com'
+        message['subject'] = 'Trec Spam'
+        body = {'raw': base64.urlsafe_b64encode(message.as_string())}
+
+        try:
+            message_sent = (service.users().messages().send(userId='me', body=body).execute())
+            print ('Message Id: %s' % message_sent['id'])
+            print ('Sent message #', i, ' of ', len(files))
+        except errors.HttpError, error:
+            print ('An error occurred: %s' % error)
+
+
 if __name__ == '__main__':
-    main()
+    send_trec()

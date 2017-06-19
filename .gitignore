@@ -3,3 +3,6 @@ stanford*
 client_secret.json
 storage
 *.pyc
+trec07p
+enron*
+maildir

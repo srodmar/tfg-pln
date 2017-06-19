@@ -48,6 +48,26 @@ def clean_text(text, lang='english'):
     punc_free = ''.join(ch for ch in stop_free if ch not in exclude)
     return punc_free.encode('utf-8')
 
+def clean_text_array(text, lang='english'):
+    try:
+        stopw = stopwords.words(lang)
+    except IOError:
+        print 'No hay stopw para: ' + lang
+        stopw = []
+    exclude = set(string.punctuation)
+    exclude.update(['¿'.decode('UTF-8'), '¡'.decode('UTF-8'), '~', '‘'.decode('UTF-8'), '’'.decode('UTF-8')])
+    # print exclude
+    print 'TEXTO ANTES DE LIMPIAR:', text
+    text = [word.encode('utf-8') for word in text]
+    # Se crea un array con todas las palabras del texto que no sean stopwords
+    # y luego se uno dicho array separando cada item por un espacio (" ")
+    stop_free = [word for word in text if word not in stopw]
+    # Se recorren todos los caracteres del string y se incluyen solo los que no
+    # son símbolos de puntuación
+    punc_free = [ch for ch in stop_free if ch not in exclude]
+    #return punc_free.encode('utf-8')
+    return [word.decode('utf-8') for word in punc_free]
+
 
 def get_topic(topic_list):
     print 'Lista de tópicos: ', topic_list
@@ -86,15 +106,18 @@ for lang in os.listdir(store_dir):
         with open(texts_dir + '/' + file, 'r') as current_file:
             text = current_file.read()
         # print 'IDIOMA: ' + lang + ' TEXT: ' + text
-        if lang in idiomas:
+        '''if lang in idiomas:
             ctext = clean_text(text, idiomas[lang])
         else:
             ctext = clean_text(text)
+        print ctext'''
         if analyzer:
-            lemmas = extract_lemmas(analyzer, ctext)
+            lemmas = extract_lemmas(analyzer, text)
+            lemmas = clean_text_array(lemmas, idiomas[lang])
         else:
-            lemmas = ctext.split()
+            lemmas = clean_text(text, idiomas[lang]).split()
         logger.info(lemmas)
+        print 'CLEAN LEMMAS:', lemmas
         # Agrego cada array de lemmas al diccionario, con su mail id como clave
         lang_lemmas[file[-20:-4]] = (lemmas, file[:-21], text)
     dictionary = gensim.corpora.Dictionary(
