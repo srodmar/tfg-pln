@@ -28,7 +28,7 @@ output = analyzer.run('Hola mundo', 'noflush')
 print(etree.tostring(output))
 '''
 def extract_lemmas(analyzer, text):
-    xml = analyzer.run(text, 'flush')
+    xml = analyzer.run(text)
     print xml
     obj = xmltodict.parse(etree.tostring(xml))
     #print obj
@@ -42,24 +42,32 @@ def extract_lemmas(analyzer, text):
                     for token in sentence['token']:
                         #print 'TOKEN list:'
                         #pp.pprint(token)
-                        if token['@tag'].startswith('NP') or token['@tag'].startswith('NNP'):
-                            print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
+                        if token['@tag'].startswith(('NP', 'NNP')):
+                            #print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
                             continue
                         lemmas.append(token['@lemma'])
                 else:
                     token = sentence['token']
-                    if token['@tag'].startswith('NP') or token['@tag'].startswith('NNP'):
-                        print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
+                    if token['@tag'].startswith(('NP', 'NNP')):
+                        #print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
                         continue
                     lemmas.append(token['@lemma'])
         else:
-            for token in obj['sentences']['sentence']['token']:
-                print 'TOKEN no list:', token
-                if token['@tag'].startswith('NP') or token['@tag'].startswith('NNP'):
-                    print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
-                    continue
-                lemmas.append(token['@lemma'])
-    print 'LEMMMAAAS', lemmas
+            if isinstance(obj['sentences']['sentence']['token'], list):
+                for token in obj['sentences']['sentence']['token']:
+                    #print 'TOKEN no list:', token
+                    if token['@tag'].startswith(('NP', 'NNP')):
+                        #print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
+                        continue
+                    lemmas.append(token['@lemma'])
+            else:
+                token = obj['sentences']['sentence']['token']
+                if token['@tag'].startswith(('NP', 'NNP')):
+                    #print 'ESTEEE NOOOOOOOOOO:', token['@lemma']
+                    pass
+                else:
+                    lemmas.append(token['@lemma'])
+    #print 'LEMMMAAAS', lemmas
     return lemmas
 
 def extract_lemmas_sentences(analyzer, text):

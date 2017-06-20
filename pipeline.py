@@ -16,18 +16,34 @@ from test_pyfreeling import extract_lemmas
 from store_results import insert_email
 
 # Se lanza la recogida de correos electrónicos
-#collect_mails()
+# collect_mails()
 
 # Se analizan los correos y se muestran los idiomas detectados
-#detect_classify()
+# detect_classify()
 
 # Detectar idioma correo -> lanzar Stanford para ese idioma -> Procesar con StanfordCoreNLP
 # Problema: hay que cerrar y volver a lanzar Stanford con cada cambio de idioma
 # Solución: dividir los correos por idioma y lanzar una instancia del
 # servidor por cada idioma
 
-logging.basicConfig(filename="sample.log", filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename="sample.log", filemode='w', level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 logger = logging.getLogger(__name__)
+
+
+def clean_symbols(word_array):
+    aux_array = list(word_array)
+    logger.info('WORD ARRAY: %s', word_array)
+    symbols = ('[', '>>', '\\', '?', '+', '-', ':', '_', '"', '.', ',', ';', 'http', '#', 'image')
+    for word in word_array:
+        logger.info('ANALIZANDO: %s', word)
+        if word.startswith(symbols) or word[:1].isdigit() or len(word) <= 1:
+            print 'PALABRA QUE NO MOLA', word
+            logger.info('PALABRA QUE NO MOLA: %s', word)
+            aux_array.remove(word)
+
+    print 'ARRAY QUE DEBERÍA MOLAR', aux_array
+    logger.info('ARRAY QUE DEBERIA MOLAR: %s', aux_array)
+    return aux_array
 
 
 def clean_text(text, lang='english'):
@@ -37,8 +53,10 @@ def clean_text(text, lang='english'):
         print 'No hay stopw para: ' + lang
         stopw = []
     exclude = set(string.punctuation)
-    exclude.update(['¿'.decode('UTF-8'), '¡'.decode('UTF-8'), '~'])
+    exclude.update(['¿'.decode('UTF-8'), '¡'.decode('UTF-8'), '~', '‘'.decode('UTF-8'),
+                    '’'.decode('UTF-8'), '–'.decode('UTF-8')])
     # print exclude
+    logger.info('TEXTO ANTES DE LIMPIAR: %s', text)
     text = text.decode('utf-8')
     # Se crea un array con todas las palabras del texto que no sean stopwords
     # y luego se uno dicho array separando cada item por un espacio (" ")
@@ -46,7 +64,10 @@ def clean_text(text, lang='english'):
     # Se recorren todos los caracteres del string y se incluyen solo los que no
     # son símbolos de puntuación
     punc_free = ''.join(ch for ch in stop_free if ch not in exclude)
-    return punc_free.encode('utf-8')
+    symbols_free = clean_symbols(punc_free.split())
+    return [word.encode('utf-8') for word in symbols_free]
+    # return punc_free.encode('utf-8')
+
 
 def clean_text_array(text, lang='english'):
     try:
@@ -55,9 +76,10 @@ def clean_text_array(text, lang='english'):
         print 'No hay stopw para: ' + lang
         stopw = []
     exclude = set(string.punctuation)
-    exclude.update(['¿'.decode('UTF-8'), '¡'.decode('UTF-8'), '~', '‘'.decode('UTF-8'), '’'.decode('UTF-8')])
+    exclude.update(['¿'.decode('UTF-8'), '¡'.decode('UTF-8'), '~', '‘'.decode('UTF-8'),
+                    '’'.decode('UTF-8'), '–'.decode('UTF-8')])
     # print exclude
-    print 'TEXTO ANTES DE LIMPIAR:', text
+    logger.info('TEXTO ANTES DE LIMPIAR: %s', text)
     text = [word.encode('utf-8') for word in text]
     # Se crea un array con todas las palabras del texto que no sean stopwords
     # y luego se uno dicho array separando cada item por un espacio (" ")
@@ -65,8 +87,9 @@ def clean_text_array(text, lang='english'):
     # Se recorren todos los caracteres del string y se incluyen solo los que no
     # son símbolos de puntuación
     punc_free = [ch for ch in stop_free if ch not in exclude]
-    #return punc_free.encode('utf-8')
-    return [word.decode('utf-8') for word in punc_free]
+    # return punc_free.encode('utf-8')
+    symbols_free = clean_symbols(punc_free)
+    return [word.decode('utf-8') for word in symbols_free]
 
 
 def get_topic(topic_list):
@@ -81,9 +104,9 @@ def get_topic(topic_list):
     return max_topic_id
 
 store_dir = 'storage/body_texts/classified'
-idiomas = {'ca': 'catalan', 'en': 'english', 'es': 'spanish', 'fr': 'french',
+idiomas = {'af': 'afrikaans', 'ca': 'catalan', 'en': 'english', 'es': 'spanish', 'fr': 'french',
            'gl': 'galician', 'it': 'italian', 'pt': 'portuguese',
-           'ru': 'russian', 'de': 'german', 'nl': 'dutch', 'sl': 'slovene'}
+           'ru': 'russian', 'de': 'german', 'nl': 'dutch', 'sl': 'slovene', 'cy': 'welsh'}
 #port = 8081
 idiomas_freeling = ['as', 'ca', 'cy', 'en', 'es', 'fr', 'gl', 'it', 'pt', 'ru']
 analyzer = {}
@@ -98,6 +121,9 @@ for lang in os.listdir(store_dir):
 # for lang in analyzer:
     # print 'ANALIZANDO ' + lang
     # if lang == 'es':
+    if lang not in idiomas:
+        print 'LANG RARO', lang
+        continue
     texts_dir = store_dir + '/' + lang
     lang_lemmas = {}
     file_list = os.listdir(texts_dir)
@@ -115,8 +141,8 @@ for lang in os.listdir(store_dir):
             lemmas = extract_lemmas(analyzer, text)
             lemmas = clean_text_array(lemmas, idiomas[lang])
         else:
-            lemmas = clean_text(text, idiomas[lang]).split()
-        logger.info(lemmas)
+            lemmas = clean_text(text, idiomas[lang])
+        # logger.info(lemmas)
         print 'CLEAN LEMMAS:', lemmas
         # Agrego cada array de lemmas al diccionario, con su mail id como clave
         lang_lemmas[file[-20:-4]] = (lemmas, file[:-21], text)
@@ -125,12 +151,12 @@ for lang in os.listdir(store_dir):
     email_term_matrix = [dictionary.doc2bow(
         tuple[0]) for id, tuple in lang_lemmas.viewitems()]
     lda = gensim.models.ldamodel.LdaModel(
-        email_term_matrix, num_topics=10, id2word=dictionary, passes=20)
+        email_term_matrix, num_topics=100, id2word=dictionary, passes=2)
     # print lda.show_topics(num_topics=10, num_words=5)
     for mail_id in lang_lemmas:
-        mail_topic = get_topic(lda.get_document_topics(
+        mail_topic_id = get_topic(lda.get_document_topics(
             dictionary.doc2bow(lang_lemmas[mail_id][0])))
         insert_email(mail_id, lang_lemmas[mail_id][1], lang_lemmas[
-                     mail_id][2], lda.show_topic(mail_topic, topn=5))
+                     mail_id][2], lda.show_topic(mail_topic_id, topn=5), mail_topic_id)
         # print 'Mail: %s - Topic: %s' % (id, lda.show_topic(mail_topic,
         # topn=5))

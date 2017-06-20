@@ -1,4 +1,5 @@
 from langdetect import detect, detect_langs
+from langdetect.lang_detect_exception import LangDetectException
 from chardet.universaldetector import UniversalDetector
 from pyfreeling import Analyzer
 from lxml import etree
@@ -54,8 +55,13 @@ def detect_classify():
                 detector.close()
             # Si se pudo detectar el encoding del fichero
             if detector.result['encoding']:
-                dlang = detect(data.decode(detector.result['encoding']))
-                move_dir = '/classified/' + str(dlang)
+                print detector.result['encoding']
+                try:
+                    dlang = detect(data.decode(detector.result['encoding'], 'replace'))
+                    move_dir = '/classified/' + str(dlang)
+                except LangDetectException, error:
+                    print('Error de deteccion de idioma')
+                    move_dir = '/classified/errors'
             else:
                 move_dir = '/classified/errors'
 
