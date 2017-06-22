@@ -82,8 +82,8 @@ def main():
             for msg in messages:
                 msg_id = msg['id']
                 message = service.users().messages().get(userId='me', id=msg_id).execute()
-                print('MESSAGEEE:')
-                pp.pprint(get_subject(message['payload']['headers']))
+                #print('MESSAGEEE:')
+                #pp.pprint(get_subject(message['payload']['headers']))
                 iter_part(message['payload'], store_dir, service, msg_id)
 
     except errors.HttpError, error:
@@ -97,7 +97,7 @@ def get_subject(headers):
 
 
 def iter_part(payload, store_dir, service, msg_id):
-    print('PAYLOAD', payload)
+    #print('PAYLOAD', payload)
     if 'parts' in payload:
         for i, part in enumerate(payload['parts']):
             if part['mimeType'] == 'text/plain':
