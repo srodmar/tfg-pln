@@ -151,7 +151,7 @@ def get_lemmas_topics():
 
         email_term_matrix = [dictionary.doc2bow(item[1]) for item in lemmasA]
         lda = gensim.models.ldamodel.LdaModel(
-            email_term_matrix, num_topics=10, id2word=dictionary, passes=1)
+            email_term_matrix, num_topics=20, id2word=dictionary, passes=1)
 
         # print lda.show_topics(num_topics=10, num_words=5)
         for tup in lemmasB:
@@ -171,10 +171,10 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
 
     # Se lanza la recogida de correos electrónicos
-    #collect_mails()
+    collect_mails()
 
     # Se analizan los correos y se muestran los idiomas detectados
-    #detect_classify()
+    detect_classify()
 
     # Se consiguen los lemmas de cada palabra de los correos y se extraen tópicos
     get_lemmas_topics()

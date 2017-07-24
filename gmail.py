@@ -61,7 +61,7 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
     store_dir = 'storage'
-    query = ''
+    query = 'from:(alu0100699968@ull.edu.es OR isanchez@ull.edu.es)'
 
     try:
         response = service.users().messages().list(userId='me',
@@ -204,7 +204,7 @@ def send_trec():
             message = email.message_from_file(current_file)
         #message = MIMEText(text, 'html')
         del message['To']
-        message['To'] = '@gmail.com'
+        message['To'] = 'test.tfg.pln@gmail.com'
         sub = message['Subject']
         del message['Subject']
         message['Subject'] = sub + ' - Trec Spam'
@@ -234,7 +234,7 @@ def send_enron():
             message = email.message_from_file(current_file)
         #message = MIMEText(text, 'html')
         del message['To']
-        message['To'] = '@gmail.com'
+        message['To'] = 'test.tfg.pln@gmail.com'
         sub = message['Subject']
         del message['Subject']
         message['Subject'] = sub + ' - Enron Mail'
