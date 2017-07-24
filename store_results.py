@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 client = MongoClient('10.6.128.9', 8081)
-client.email.authenticate('emailUser', 'emailsazo99', mechanism='SCRAM-SHA-1')
+client.email.authenticate('emailUser', '', mechanism='SCRAM-SHA-1')
 
 
 db = client.email

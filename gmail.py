@@ -61,7 +61,7 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
     store_dir = 'storage'
-    query = 'from:(alu0100699968@ull.edu.es OR isanchez@ull.edu.es)'
+    query = ''
 
     try:
         response = service.users().messages().list(userId='me',
